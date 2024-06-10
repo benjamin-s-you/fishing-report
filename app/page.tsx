@@ -1,22 +1,28 @@
-import React, { Suspense } from "react";
+/**
+ * Marked as Server Component
+ */
+
+import React, { Suspense, useEffect } from "react";
 import { NextUIProvider } from "@nextui-org/react";
-import { Search } from "@/app/ui/search";
-import { CurrentLocation } from "@/app/ui/buttons";
-import DashboardSkeleton from "@/app/ui/skeletons";
-import Dashboard from "@/app/ui/cards";
-import Table from "@/app/ui/table";
+import { Search } from "@/app/ui/components/search";
+import { CurrentLocation } from "@/app/ui/components/buttons";
+import DashboardSkeleton from "@/app/ui/components/skeletons";
+import Dashboard from "@/app/ui/components/dashboard";
+import StationTable from "@/app/ui/components/station-table";
 import { Station } from "@/app/lib/tide/types";
-import { fetchAllStations } from "@/app/lib/tide/api";
+import { fetchAllStations, fetchStationData } from "@/app/lib/tide/api";
+import { globalStore } from "@/app/store/global";
 
 export default async function Home({
   searchParams,
 }: {
   searchParams?: {
     query?: string;
+    stationId?: string;
   };
 }) {
-  const query = searchParams?.query || "";
-  const allTidePredictionStations: Station[] = await fetchAllStations();
+  const stations: Station[] = await fetchAllStations();
+  const stationId = searchParams?.stationId || "";
 
   return (
     <NextUIProvider>
@@ -25,11 +31,9 @@ export default async function Home({
         <div className="my-4 flex items-center justify-between gap-2 md:mt-8">
           <Search placeholder="Search a location..." />
         </div>
-        <Suspense key={query} fallback={<div>Pending</div>}>
-          <Table stations={allTidePredictionStations} query={query} />
-        </Suspense>
+        <StationTable stations={stations} />
         <div className="mt-4">
-          <Dashboard />
+          <Dashboard stationId={stationId} />
         </div>
       </main>
     </NextUIProvider>

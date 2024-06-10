@@ -3,11 +3,10 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
 import "chart.js/auto";
-import { TidePredictions } from "@/app/lib/tide/types";
 import "chartjs-adapter-moment";
 import moment from "moment";
 
-export function TideChart({ tideData }: { tideData: TidePredictions }) {
+export function TideChart({ tideData }: { tideData: TidePrediction[] }) {
   const currentTime = moment();
   const minTime = moment().startOf("day");
   const maxTime = moment().startOf("day").add(1, "days");
@@ -39,15 +38,16 @@ export function TideChart({ tideData }: { tideData: TidePredictions }) {
   };
 
   const data = {
-    labels: tideData.predictions.map((prediction) => new Date(prediction.date)),
+    labels: tideData.map((prediction) => new Date(prediction.date)),
     datasets: [
       {
         label: "Water Level",
-        data: tideData.predictions.map((prediction) => prediction.height),
+        data: tideData.map((prediction) => prediction.height),
         borderColor: "rgba(24, 153, 227, 1)",
         backgroundColor: "rgba(24, 153, 227, 0.2)",
         fill: true,
         tension: 0.4, // Curved lines
+        cubicInterpolationMode: "monotone",
         datalabels: {
           align: "top",
           anchor: "end",

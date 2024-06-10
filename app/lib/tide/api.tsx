@@ -1,3 +1,5 @@
+import "server-only";
+
 import axios from "axios";
 import { unstable_noStore as noStore } from "next/cache";
 import { Station, TidePrediction, TidePredictions } from "@/app/lib/tide/types";
@@ -6,12 +8,13 @@ import { mapToStation, mapToTidePrediction } from "@/app/lib/tide/helpers";
 import { Moment } from "moment";
 
 export async function fetchAllStations(): Promise<Station[]> {
+  noStore();
   try {
-    noStore();
-    const url = Utils.getAllStationsUrl();
-    const response = await axios.get(url);
-    const data = response.data.stations;
-    const stations: Station[] = data.map((station: any) => {
+    const url: string = Utils.getAllStationsUrl();
+    const response: Response = await fetch(url);
+    const data = await response.json();
+
+    const stations: Station[] = data.stations.map((station: any) => {
       return mapToStation(station);
     });
 
@@ -22,50 +25,46 @@ export async function fetchAllStations(): Promise<Station[]> {
   }
 }
 
-// // eventually get from state object - stationId
-// export async function fetchStationData(stationId: number): Promise<Station> {
-//   noStore();
+export async function fetchStationData(stationId: string): Promise<Station> {
+  try {
+    const url = Utils.getStationUrl(stationId);
+    const response = await fetch(url);
+    const data = await response.json();
 
-//   const url = Utils.getStationUrl(stationId);
-//   const response = await axios.get(url);
-//   const data = response.data.stations[0];
+    const station: Station = {
+      state: data.stations[0].state,
+      timezone: data.stations[0].timezone,
+      timezonecorr: data.stations[0].timezonecorr,
+      reference_id: data.stations[0].reference_id,
+      id: data.stations[0].id,
+      name: data.stations[0].name,
+      lat: data.stations[0].lat,
+      lng: data.stations[0].lng,
+      tideType: data.stations[0].tideType,
+      products: data.stations[0].products,
+    };
 
-// const station: Station = {
-//   state: data.state,
-//   timezone: data.timezone,
-//   timezonecorr: data.timezonecorr,
-//   reference_id: data.reference_id,
-//   id: data.id,
-//   name: data.name,
-//   lat: data.lat,
-//   lng: data.lng,
-//   tideType: data.tideType,
-//   products: data.products,
-//   referenceStation:
-//     data.reference_id !== undefined
-//       ? (data.tidePredOffsets = await fetchStationData(
-//           parseInt(data.reference_id)
-//         ))
-//       : null,
-// };
-
-//   return station;
-// }
+    return station;
+  } catch (error) {
+    console.error("Error fetching station", error);
+    throw new Error("Failed to fetch station");
+  }
+}
 
 export async function fetchTideData(
-  stationId: number,
+  stationId: string,
   beginDate: Moment,
   timeZone: string = "lst_ldt",
   unit: string = "english"
-): Promise<TidePredictions> {
+): Promise<TidePrediction[]> {
   try {
-    noStore();
     const url = Utils.getTidePredictionsUrl(
       beginDate, // eventually get from state object
       stationId, // eventually get from state object
       timeZone, // eventually get from state object
       unit // eventually get from state object
     );
+
     const response: any = await axios.get(url);
     const data: any = response.data.predictions;
 
@@ -73,7 +72,7 @@ export async function fetchTideData(
       return mapToTidePrediction(prediction, unit);
     });
 
-    return { predictions: predictions };
+    return predictions;
   } catch (error) {
     console.error("Error fetching tide data:", error);
     throw new Error("Failed to fetch tide data");

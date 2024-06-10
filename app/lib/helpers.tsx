@@ -1,3 +1,5 @@
+import "server-only";
+
 import { TideLevel } from "@/app/lib/tide/types";
 import moment from "moment";
 

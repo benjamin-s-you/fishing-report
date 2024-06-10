@@ -47,10 +47,6 @@ export interface TidePrediction {
   unit: Unit;
 }
 
-export interface TidePredictions {
-  predictions: TidePrediction[];
-}
-
 interface Product {
   name: string;
   link: string;
